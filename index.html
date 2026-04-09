@@ -201,6 +201,7 @@ h3.sh3{font-size:14px;font-weight:600;color:var(--text);margin:16px 0 8px}
     <div class="nav-item active" data-s="t1" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Основы n8n</div>
     <div class="nav-item" data-s="t2" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Ключевые ноды</div>
     <div class="nav-item" data-s="t3" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Expressions</div>
+    <div class="nav-item" data-s="cc" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Claude Code + MCP</div>
   </div>
   <div class="sb-section">
     <div class="sb-label">Практика</div>
@@ -459,6 +460,155 @@ Email: {{ $('Webhook').item.json.body.email }}
     <div class="card-title">Chat ID — куда отвечать</div>
     <div class="code-block" id="expr-chatid">{{ $('Telegram Trigger').item.json.message.chat.id }}<button class="copy-btn" onclick="copyCode('expr-chatid',this)">copy</button></div>
     <div class="warn" style="margin-top:10px">После AI Agent нода <code>$json</code> содержит ответ AI, а не данные из Telegram. Поэтому Chat ID берём через <code>$('Telegram Trigger').item.json</code>, а не через <code>$json</code>.</div>
+  </div>
+</div>
+
+<!-- ─── CLAUDE CODE + MCP ─── -->
+<div class="section" id="s-cc">
+  <div class="page-header">
+    <div class="page-tag tag-purple">Теория · Блок 4</div>
+    <div class="page-title">Claude Code + MCP</div>
+    <div class="page-desc">Подключи AI-ассистент к n8n и создавай воркфлоу текстом — без перетаскивания нодов вручную.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Зачем это нужно</div>
+    <div class="card-body">Claude Code — это AI-ассистент в терминале, который пишет код, управляет файлами и выполняет команды. Когда к нему подключается n8n через MCP — он начинает напрямую создавать и редактировать воркфлоу в твоём n8n инстансе.<br><br>Вместо того чтобы вручную перетаскивать ноды в интерфейсе — ты описываешь автоматизацию текстом, а Claude Code собирает её за тебя. Это особенно удобно когда воркфлоу сложный, когда нужно быстро итерировать, или когда хочешь объяснить задачу словами а не кликами.
+    <div class="info" style="margin-top:12px"><strong>Что можно делать:</strong><br>
+    — Создавать воркфлоу с нуля текстовым описанием<br>
+    — Обновлять и редактировать существующие воркфлоу<br>
+    — Искать нужные ноды по названию или функции<br>
+    — Получать историю выполнений и разбирать ошибки<br>
+    — Активировать и деактивировать воркфлоу</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Что нужно для подключения</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Работающий n8n</div>
+          <div class="step-desc">n8n.cloud, self-hosted на VPS, или локально через Docker</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">API Key из n8n</div>
+          <div class="step-desc">Settings → API → Create API Key</div>
+          <div class="step-detail">Скопировать сразу — показывается только один раз</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">URL твоего n8n</div>
+          <div class="step-detail">
+            n8n.cloud → <code>https://yourname.app.n8n.cloud</code><br>
+            Self-hosted → <code>https://n8n.yourdomain.com</code><br>
+            Локально → <code>http://localhost:5678</code>
+          </div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Node.js</div>
+          <div class="step-desc">Установлен на компьютере. Проверить: <code>node -v</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">5</div></div>
+        <div class="step-content">
+          <div class="step-title">Claude Code</div>
+          <div class="step-desc">Установлен и авторизован — команда <code>claude</code> в терминале работает</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Подключение n8n-mcp к Claude Code</div>
+    <div class="card-body" style="margin-bottom:12px">Это сторонний MCP-сервер <strong>n8n-mcp</strong> — даёт Claude полное знание о всех нодах n8n и умение создавать воркфлоу. Устанавливается одной командой в терминале:</div>
+    <div class="code-block" id="cc-install">claude mcp add n8n-mcp \
+  -e MCP_MODE=stdio \
+  -e LOG_LEVEL=error \
+  -e DISABLE_CONSOLE_OUTPUT=true \
+  -e N8N_API_URL=https://your-n8n-instance.com \
+  -e N8N_API_KEY=your-api-key \
+  -- npx n8n-mcp<button class="copy-btn" onclick="copyCode('cc-install',this)">copy</button></div>
+    <div class="card-body" style="margin-top:12px;margin-bottom:12px">Заменить <code>your-n8n-instance.com</code> на свой URL и <code>your-api-key</code> на ключ из n8n.<br><br>Проверить что подключилось:</div>
+    <div class="code-block" id="cc-list">claude mcp list<button class="copy-btn" onclick="copyCode('cc-list',this)">copy</button></div>
+    <div class="tip">Или прямо внутри сессии Claude Code написать <code>/mcp</code> — покажет статус всех подключённых серверов.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Если n8n-mcp уже настроен в Claude Desktop</div>
+    <div class="card-body" style="margin-bottom:12px">Не нужно настраивать заново — достаточно одной команды:</div>
+    <div class="code-block" id="cc-import">claude mcp add-from-claude-desktop<button class="copy-btn" onclick="copyCode('cc-import',this)">copy</button></div>
+    <div class="tip">Claude Code импортирует все MCP серверы из Claude Desktop автоматически.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Как говорить с Claude Code чтобы создать воркфлоу</div>
+    <div class="card-body" style="margin-bottom:12px">Открываешь терминал, запускаешь <code>claude</code>, и описываешь задачу:</div>
+    <div class="code-block" id="cc-prompt">Создай воркфлоу в n8n:
+- Триггер: Telegram Trigger, слушает входящие сообщения
+- AI Agent с моделью gpt-4o
+- System prompt: "Ты вежливый ассистент. Отвечай кратко, не больше 3 предложений."
+- User message берётся из поля message.text входящего сообщения
+- Ответ AI отправляется обратно в тот же чат через Telegram Send Message<button class="copy-btn" onclick="copyCode('cc-prompt',this)">copy</button></div>
+    <div class="tip">Claude Code сгенерирует воркфлоу, провалидирует его и создаст прямо в n8n. Тебе останется только зайти в интерфейс, добавить credentials и активировать.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">Важно про Credentials</div>
+    <div class="card-body">Claude Code создаёт структуру воркфлоу, но API ключи к сервисам (Telegram, OpenAI, Google) он не может добавить сам — это нужно сделать вручную в n8n UI один раз:</div>
+    <div class="warn">Settings → Credentials → Add Credential → выбрать тип → вставить ключ<br><br>После этого Claude Code будет указывать имя нужного credential в ноде, а ты просто выбираешь его из списка.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title teal">Типичный рабочий процесс</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Открыть терминал → запустить <code>claude</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Описать автоматизацию текстом на русском</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Claude Code создаёт воркфлоу в n8n через MCP</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Зайти в n8n UI → добавить credentials → активировать</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">5</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Протестировать</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">6</div></div>
+        <div class="step-content">
+          <div class="step-title">Если нужно поправить — написать Claude Code что изменить</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
