@@ -405,16 +405,6 @@ return [{ json: { ...$input.first().json, id } }];<button class="copy-btn" oncli
     </div>
   </div>
 
-  <div class="coll" data-c="amber" onclick="toggleColl(this)">
-    <div class="coll-head"><div class="coll-title"><span class="pill pill-amber">Set</span></div><span class="coll-arr">▼</span></div>
-    <div class="coll-body" onclick="event.stopPropagation()">
-      <div class="card-body" style="margin-bottom:12px">Добавляет, изменяет или удаляет поля в item. Самый частый утилитарный нод.</div>
-      <table class="tbl"><tr><th>Режим</th><th>Что делает</th></tr>
-      <tr><td><code>Add Field</code></td><td>Добавляет новое поле, остальные сохраняются</td></tr>
-      <tr><td><code>Keep Only Set</code></td><td>Удаляет все поля кроме указанных</td></tr></table>
-      <div class="tip">Set нод удобен чтобы переименовать поле: получил <code>user_name</code>, хочешь передать дальше как <code>name</code> — Set сделает без кода.</div>
-    </div>
-  </div>
 </div>
 
 <!-- ─── THEORY 3: EXPRESSIONS ─── -->
