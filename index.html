@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>n8n Mini-Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#f0f0ec;
+  --border:#e8e8e4;--border2:#d0d0c8;
+  --text:#1a1a18;--text2:#5c5c54;--text3:#9c9c92;
+  --purple:#5b4fcf;--purple-bg:#f0effe;--purple-bd:#c9c4f5;
+  --teal:#0f7d6b;--teal-bg:#edf8f5;--teal-bd:#a3dcd3;
+  --amber:#9a5c0a;--amber-bg:#fef6e8;--amber-bd:#f5d499;
+  --blue:#1a5fb4;--blue-bg:#edf3fc;--blue-bd:#a4c2f0;
+  --green:#166534;--green-bg:#f0fdf4;--green-bd:#86efac;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-bd:#fca5a5;
+  --sans:'Plus Jakarta Sans',system-ui,sans-serif;
+  --r:10px;--r-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.7;min-height:100vh}
+::selection{background:var(--purple-bg);color:var(--purple)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* LAYOUT */
+.app{display:flex;min-height:100vh}
+.sidebar{width:228px;flex-shrink:0;border-right:1px solid var(--border);padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--bg)}
+.content{flex:1;padding:44px 52px;max-width:800px}
+
+/* SIDEBAR */
+.sb-logo{padding:0 16px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sb-logo-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.02em}
+.sb-logo-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.sb-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:0 16px;margin:16px 0 4px}
+.sb-section{padding:0 8px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--r-sm);cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
+.nav-item[data-c="teal"].active{background:var(--teal-bg);color:var(--teal);border-color:var(--teal-bd)}
+.nav-item[data-c="amber"].active{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+.nav-item[data-c="blue"].active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .15s}
+.nav-item.active .nav-dot{background:var(--purple)}
+.nav-item[data-c="teal"].active .nav-dot{background:var(--teal)}
+.nav-item[data-c="amber"].active .nav-dot{background:var(--amber)}
+.nav-item[data-c="blue"].active .nav-dot{background:var(--blue)}
+
+/* SECTIONS */
+.section{display:none;animation:fadeIn .2s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.page-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+.tag-purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
+.tag-teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd)}
+.tag-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.tag-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.page-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:8px}
+.page-desc{font-size:14px;color:var(--text2);line-height:1.65;max-width:560px}
+.nodes-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+
+/* CARD */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--purple);flex-shrink:0}
+.card-title.teal::before{background:var(--teal)}
+.card-title.amber::before{background:var(--amber)}
+.card-title.blue::before{background:var(--blue)}
+.card-body{font-size:14px;color:var(--text2);line-height:1.7}
+
+/* PILL / BADGE */
+.pill{display:inline-flex;align-items:center;font-family:monospace;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
+.pill-purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
+.pill-teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd)}
+.pill-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.pill-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.pill-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.badge-easy{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase}
+.badge-med{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase}
+.badge-hard{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase}
+
+/* CODE */
+code{font-family:monospace;font-size:12px;background:var(--bg3);padding:2px 6px;border-radius:4px;color:var(--purple);font-weight:600}
+.code-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;font-family:monospace;font-size:12px;color:var(--text2);line-height:1.75;margin:10px 0;position:relative;overflow:auto;white-space:pre-wrap}
+.copy-btn{position:absolute;top:8px;right:8px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--text3);font-size:10px;font-family:monospace;padding:3px 8px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{color:var(--text);border-color:var(--border2)}
+.copy-btn.copied{color:var(--green);border-color:var(--green-bd)}
+
+/* CONCEPT GRID */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:16px}
+.concept-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .18s}
+.concept-card:hover{border-color:var(--border2);background:var(--bg2)}
+.concept-card.open{border-color:var(--purple-bd);background:var(--purple-bg)}
+.concept-icon{font-size:18px;margin-bottom:8px}
+.concept-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;display:flex;align-items:center;justify-content:space-between}
+.concept-short{font-size:12px;color:var(--text3)}
+.concept-expand{font-size:13px;color:var(--text2);line-height:1.65;margin-top:12px;padding-top:12px;border-top:1px solid var(--purple-bd);display:none}
+.concept-card.open .concept-expand{display:block}
+.arr{font-size:10px;color:var(--text3);transition:transform .18s;flex-shrink:0}
+.concept-card.open .arr{transform:rotate(180deg)}
+
+/* FLOW STEPS */
+.flow-steps{display:flex;flex-direction:column}
+.flow-step{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)}
+.flow-step:last-child{border-bottom:none;padding-bottom:0}
+.step-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;font-family:monospace}
+.sn-p{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
+.sn-t{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd)}
+.sn-a{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.sn-b{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.sn-g{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.step-line{width:1px;flex:1;background:var(--border);margin-top:4px;min-height:8px}
+.step-content{flex:1;padding-bottom:2px}
+.step-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step-desc{font-size:13px;color:var(--text2);line-height:1.65}
+.step-detail{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-top:10px;font-size:13px;color:var(--text2);line-height:1.7}
+.step-detail-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+
+/* INFO BOXES */
+.tip{background:var(--teal-bg);border:1px solid var(--teal-bd);border-radius:var(--r-sm);padding:11px 14px;font-size:13px;color:var(--teal);line-height:1.6;margin-top:12px}
+.warn{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r-sm);padding:11px 14px;font-size:13px;color:var(--amber);line-height:1.6;margin-top:12px}
+.info{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--r-sm);padding:11px 14px;font-size:13px;color:var(--blue);line-height:1.6;margin-top:12px}
+
+/* COLLAPSIBLE */
+.coll{border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:border-color .18s}
+.coll:hover{border-color:var(--border2)}
+.coll.open{border-color:var(--purple-bd)}
+.coll-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;gap:12px;background:var(--bg);transition:background .15s}
+.coll-head:hover{background:var(--bg2)}
+.coll.open .coll-head{background:var(--purple-bg)}
+.coll-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px}
+.coll-arr{font-size:10px;color:var(--text3);transition:transform .18s;flex-shrink:0}
+.coll.open .coll-arr{transform:rotate(180deg)}
+.coll-body{padding:16px;display:none;border-top:1px solid var(--border)}
+.coll.open .coll-body{display:block}
+.coll[data-c="teal"].open{border-color:var(--teal-bd)}
+.coll[data-c="teal"].open .coll-head{background:var(--teal-bg)}
+.coll[data-c="amber"].open{border-color:var(--amber-bd)}
+.coll[data-c="amber"].open .coll-head{background:var(--amber-bg)}
+.coll[data-c="blue"].open{border-color:var(--blue-bd)}
+.coll[data-c="blue"].open .coll-head{background:var(--blue-bg)}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+.tbl th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top;line-height:1.55}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg2)}
+
+/* CHECKLIST */
+.cl-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cl-bar-wrap{flex:1;height:3px;background:var(--border);border-radius:2px}
+.cl-bar-fill{height:3px;background:var(--teal);border-radius:2px;transition:width .3s}
+.cl-count{font-size:11px;font-family:monospace;color:var(--text3);white-space:nowrap}
+.cl-list{display:flex;flex-direction:column;gap:3px}
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:7px 8px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s;border:1px solid transparent}
+.cl-item:hover{background:var(--bg2)}
+.cl-item.done span{text-decoration:line-through;color:var(--text3)}
+.cl-box{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cl-item.done .cl-box{background:var(--teal);border-color:var(--teal)}
+.cl-tick{display:none}
+.cl-item.done .cl-tick{display:block}
+.cl-text{font-size:13px;color:var(--text2);line-height:1.5}
+
+/* H2, H3 */
+h2.sh{font-size:17px;font-weight:700;color:var(--text);margin:28px 0 12px}
+h3.sh3{font-size:14px;font-weight:600;color:var(--text);margin:16px 0 8px}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:24px 0}
+
+/* MOBILE */
+@media(max-width:700px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);overflow-x:auto;padding:12px 0 8px}
+  .sb-logo{display:none}
+  .sb-label{display:none}
+  .sb-section{display:flex;gap:4px;padding:0 10px}
+  .nav-item{white-space:nowrap;font-size:12px}
+  .content{padding:24px 20px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-title">n8n Mini-Course</div>
+    <div class="sb-logo-sub">Automation from scratch</div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Теория</div>
+    <div class="nav-item active" data-s="t1" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Основы n8n</div>
+    <div class="nav-item" data-s="t2" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Ключевые ноды</div>
+    <div class="nav-item" data-s="t3" data-c="purple" onclick="nav(this)"><span class="nav-dot"></span>Expressions</div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Практика</div>
+    <div class="nav-item" data-s="p1" data-c="teal" onclick="nav(this)"><span class="nav-dot"></span>1 — Telegram AI-бот</div>
+    <div class="nav-item" data-s="p2" data-c="amber" onclick="nav(this)"><span class="nav-dot"></span>2 — Лид-форма + AI</div>
+    <div class="nav-item" data-s="p3" data-c="blue" onclick="nav(this)"><span class="nav-dot"></span>3 — AI-дайджест</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="content">
+
+<!-- ─── THEORY 1: BASICS ─── -->
+<div class="section active" id="s-t1">
+  <div class="page-header">
+    <div class="page-tag tag-purple">Теория · Блок 1</div>
+    <div class="page-title">Основы n8n</div>
+    <div class="page-desc">Ключевые концепции которые нужно понять до первого воркфлоу. Нажимай на карточки — они раскрываются.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Что такое n8n</div>
+    <div class="card-body">n8n — инструмент автоматизации с открытым кодом. Соединяешь сервисы между собой через визуальную схему из блоков (нодов) — без написания backend-кода. Можно запускать в облаке (n8n.cloud) или на своём сервере.
+    <div class="info" style="margin-top:12px">Отличие от Zapier и Make: в n8n есть Code нод на JavaScript — это даёт гибкость для сложных сценариев, которые no-code инструменты не потянут.</div>
+    </div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-icon">⚡</div>
+      <div class="concept-name">Воркфлоу <span class="arr">▼</span></div>
+      <div class="concept-short">Цепочка нодов</div>
+      <div class="concept-expand">Воркфлоу — схема автоматизации. Состоит из нодов, соединённых стрелками. Данные текут слева направо.<br><br><strong>Active</strong> — работает автоматически по триггеру<br><strong>Inactive</strong> — только ручной запуск<br><br>Можно экспортировать как JSON и импортировать в другой инстанс — удобно для шаблонов.</div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-icon">🔲</div>
+      <div class="concept-name">Нод <span class="arr">▼</span></div>
+      <div class="concept-short">Один блок = одно действие</div>
+      <div class="concept-expand">Нод делает одну вещь: отправить запрос, записать строку, проверить условие. Получает items на входе (Input), обрабатывает и передаёт дальше (Output).<br><br><strong>Trigger</strong> — первый нод, запускает воркфлоу<br><strong>Action</strong> — действие с внешним сервисом<br><strong>Core</strong> — логика: IF, Switch, Code, Set<br><br>Переименовывай ноды — это важно для expressions и читаемости.</div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-icon">📦</div>
+      <div class="concept-name">Item <span class="arr">▼</span></div>
+      <div class="concept-short">Единица данных</div>
+      <div class="concept-expand">Item — один объект данных в потоке. Внутри каждого item есть объект <code>json</code> с полями.<br><br>Пример: Webhook получил 3 заявки → это 3 items. Каждый нод ниже обработает каждый item по очереди автоматически.<br><br>Структура: <code>{ json: { name: "Анна", email: "a@b.com" } }</code><br><br>Поле <code>binary</code> — для файлов (PDF, картинки). В большинстве задач работаем только с <code>json</code>.</div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-icon">🚀</div>
+      <div class="concept-name">Триггер <span class="arr">▼</span></div>
+      <div class="concept-short">Точка запуска</div>
+      <div class="concept-expand">Триггер — всегда первый нод. Ждёт событие и запускает всё остальное. Без активного триггера воркфлоу не запустится автоматически.<br><br><strong>Webhook</strong> — входящий HTTP-запрос<br><strong>Schedule</strong> — по расписанию / cron<br><strong>Telegram Trigger</strong> — сообщение боту<br><strong>Manual</strong> — только вручную (для теста)<br><br>Один воркфлоу = один триггер.</div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-icon">🔑</div>
+      <div class="concept-name">Credentials <span class="arr">▼</span></div>
+      <div class="concept-short">Доступы к сервисам</div>
+      <div class="concept-expand">Credentials — сохранённые токены, API-ключи, OAuth-данные. Создаются один раз в Settings → Credentials и переиспользуются в любом ноде. Хранятся зашифрованно.<br><br><strong>API Key</strong> — Telegram, OpenAI, большинство сервисов<br><strong>OAuth2</strong> — Google (Sheets, Gmail, Drive)<br><strong>Basic Auth</strong> — логин/пароль для старых API<br><br>Давай им понятные имена: "Telegram Bot @mybot", "Google Sheets prod".</div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-icon">🔄</div>
+      <div class="concept-name">Execution <span class="arr">▼</span></div>
+      <div class="concept-short">Один запуск воркфлоу</div>
+      <div class="concept-expand">Execution — один запуск воркфлоу от начала до конца. Каждый запуск сохраняется в разделе "Executions" — там видно какие данные прошли через каждый нод и где была ошибка.<br><br><strong>Success</strong> — зелёный, всё прошло<br><strong>Error</strong> — красный, нод упал<br><strong>Waiting</strong> — воркфлоу ждёт ответа<br><br>Executions — главный инструмент отладки. Всегда смотри туда если что-то пошло не так.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">Как тестировать воркфлоу</div>
+    <div class="card-body">В n8n два режима: <strong>тестовый</strong> (кнопка "Test Workflow" или "Execute Node") и <strong>продакшн</strong> (воркфлоу активен и работает по триггеру).<br><br>В тестовом режиме данные видны прямо в интерфейсе у каждого нода — нажимаешь на нод и смотришь Input / Output. Это самый удобный способ понять что происходит внутри.</div>
+    <div class="tip">Совет: тестируй каждый нод по отдельности кнопкой "Execute Node" прежде чем запускать весь воркфлоу целиком.</div>
+  </div>
+</div>
+
+<!-- ─── THEORY 2: NODES ─── -->
+<div class="section" id="s-t2">
+  <div class="page-header">
+    <div class="page-tag tag-purple">Теория · Блок 2</div>
+    <div class="page-title">Ключевые ноды</div>
+    <div class="page-desc">Ноды которые используются в 90% реальных автоматизаций. Для каждого — настройки, данные на выходе, типичные ошибки.</div>
+  </div>
+
+  <h2 class="sh">Триггеры</h2>
+
+  <div class="coll open" data-c="purple" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-purple">Telegram Trigger</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Слушает входящие сообщения Telegram-бота. Запускает воркфлоу каждый раз когда пользователь пишет боту.</div>
+      <table class="tbl"><tr><th>Поле</th><th>Что ставить</th></tr>
+      <tr><td><code>Credential</code></td><td>Telegram API credentials с токеном бота</td></tr>
+      <tr><td><code>Updates</code></td><td><code>message</code> — для текстовых сообщений. <code>callback_query</code> — для кнопок.</td></tr></table>
+      <div class="step-detail"><div class="step-detail-title">Данные из триггера</div>
+      <code>$json.message.text</code> — текст сообщения<br>
+      <code>$json.message.chat.id</code> — Chat ID (куда отвечать)<br>
+      <code>$json.message.from.first_name</code> — имя пользователя<br>
+      <code>$json.message.from.id</code> — ID пользователя</div>
+      <div class="warn">Воркфлоу с Telegram Trigger должен быть <strong>активирован</strong> (toggle вверху). В тестовом режиме ловит только первое сообщение после нажатия "Listen for events".</div>
+    </div>
+  </div>
+
+  <div class="coll" data-c="purple" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-purple">Webhook</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Принимает HTTP-запросы (GET, POST) на уникальный URL. Используется для форм, сайтов, интеграций.</div>
+      <table class="tbl"><tr><th>Поле</th><th>Что ставить</th></tr>
+      <tr><td><code>HTTP Method</code></td><td>POST — для форм и данных. GET — для простых запросов.</td></tr>
+      <tr><td><code>Path</code></td><td>Путь URL, например <code>lead-form</code>. Итоговый URL: <code>/webhook/lead-form</code></td></tr>
+      <tr><td><code>Response Mode</code></td><td><code>Last Node</code> — если используешь "Respond to Webhook" нод</td></tr></table>
+      <div class="step-detail"><div class="step-detail-title">Данные из вебхука</div>
+      POST тело: <code>$json.body.fieldName</code><br>
+      Query params: <code>$json.query.paramName</code><br>
+      Headers: <code>$json.headers['content-type']</code></div>
+      <div class="tip">Два URL: <strong>Test URL</strong> (работает пока слушаешь в редакторе) и <strong>Production URL</strong> (когда воркфлоу активен). Используй Test URL при разработке.</div>
+    </div>
+  </div>
+
+  <div class="coll" data-c="purple" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-purple">Schedule Trigger</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Запускает воркфлоу по расписанию. Поддерживает cron и визуальный настройщик.</div>
+      <table class="tbl"><tr><th>Cron</th><th>Когда запускается</th></tr>
+      <tr><td><code>0 9 * * 1-5</code></td><td>Каждый будний день в 9:00</td></tr>
+      <tr><td><code>0 17 * * 5</code></td><td>Каждую пятницу в 17:00</td></tr>
+      <tr><td><code>0 */2 * * *</code></td><td>Каждые 2 часа</td></tr>
+      <tr><td><code>30 9 * * 1,3,5</code></td><td>Пн, Ср, Пт в 9:30</td></tr></table>
+      <div class="warn">Schedule Trigger не передаёт никаких данных — он просто запускает цепочку. Первые данные появляются в следующем ноде.</div>
+    </div>
+  </div>
+
+  <h2 class="sh">Действия</h2>
+
+  <div class="coll" data-c="teal" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-teal">Telegram — Send Message</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Отправляет сообщение через Telegram-бота. Поддерживает Markdown, HTML, кнопки.</div>
+      <table class="tbl"><tr><th>Поле</th><th>Что ставить</th></tr>
+      <tr><td><code>Chat ID</code></td><td>ID чата. Для ответа пользователю: <code>{{ $('Telegram Trigger').item.json.message.chat.id }}</code></td></tr>
+      <tr><td><code>Text</code></td><td>Текст сообщения. Поддерживает <code>{{ expressions }}</code></td></tr>
+      <tr><td><code>Parse Mode</code></td><td><code>Markdown</code> или <code>HTML</code> для форматирования</td></tr></table>
+      <div class="step-detail"><div class="step-detail-title">Markdown в сообщениях</div>
+      <code>*жирный*</code> → жирный&nbsp;&nbsp;&nbsp;<code>_курсив_</code> → курсив&nbsp;&nbsp;&nbsp;<code>`код`</code> → моноширинный<br>
+      <code>[текст](url)</code> → ссылка</div>
+    </div>
+  </div>
+
+  <div class="coll" data-c="teal" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-teal">Google Sheets</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Читает, добавляет и обновляет строки. Требует OAuth2 credentials.</div>
+      <table class="tbl"><tr><th>Операция</th><th>Когда использовать</th></tr>
+      <tr><td><code>Append Row</code></td><td>Добавить новую строку в конец таблицы</td></tr>
+      <tr><td><code>Get Many Rows</code></td><td>Прочитать строки с фильтром или все сразу</td></tr>
+      <tr><td><code>Update Row</code></td><td>Обновить конкретную строку по номеру или значению</td></tr></table>
+      <div class="tip">Для Append Row включи режим "Map Each Column Manually" — так сам указываешь какое поле идёт в какую колонку. Надёжнее автоматического маппинга.</div>
+    </div>
+  </div>
+
+  <div class="coll" data-c="blue" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-blue">AI Agent</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Отправляет запрос в языковую модель (OpenAI и др.) и возвращает текстовый ответ.</div>
+      <table class="tbl"><tr><th>Поле</th><th>Что ставить</th></tr>
+      <tr><td><code>Model</code></td><td>GPT-4o, GPT-3.5-turbo и др.</td></tr>
+      <tr><td><code>System Message</code></td><td>Инструкция для AI — роль, правила, контекст. Статичный текст.</td></tr>
+      <tr><td><code>User Message</code></td><td>Сообщение пользователя. Обычно expression из предыдущего нода.</td></tr>
+      <tr><td><code>Credential</code></td><td>OpenAI API Key</td></tr></table>
+      <div class="step-detail"><div class="step-detail-title">Ответ AI-агента</div>
+      Ответ модели доступен как <code>$json.output</code> в следующем ноде.<br>
+      Из нода через несколько шагов: <code>$('AI Agent').item.json.output</code></div>
+      <div class="warn">Если System Message пустой — AI будет отвечать непредсказуемо. Всегда задавай роль и ограничения.</div>
+    </div>
+  </div>
+
+  <h2 class="sh">Логика</h2>
+
+  <div class="coll" data-c="amber" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-amber">IF</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Делит поток на две ветки: <strong>true</strong> (условие выполнено) и <strong>false</strong> (не выполнено).</div>
+      <table class="tbl"><tr><th>Тип условия</th><th>Пример</th></tr>
+      <tr><td>Строка содержит</td><td><code>$json.email</code> contains <code>@</code></td></tr>
+      <tr><td>Не пустое</td><td><code>$json.name</code> is not empty</td></tr>
+      <tr><td>Число больше</td><td><code>$json.count</code> &gt; <code>0</code></td></tr>
+      <tr><td>Равно значению</td><td><code>$json.status</code> equals <code>approved</code></td></tr></table>
+      <div class="tip">Можно добавить несколько условий через AND/OR — например проверить что и имя и email заполнены одновременно.</div>
+    </div>
+  </div>
+
+  <div class="coll" data-c="amber" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-amber">Code</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Выполняет JavaScript. Для трансформации данных, работы с массивом или сложной логики.</div>
+      <div class="step-detail-title" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Собрать все items в строку</div>
+      <div class="code-block" id="code-merge">const items = $input.all();
+const summary = items.map((item, idx) =>
+  `${idx + 1}. ${item.json.name} — ${item.json.request}`
+).join('\n');
+return [{ json: { summary, count: items.length } }];<button class="copy-btn" onclick="copyCode('code-merge',this)">copy</button></div>
+      <div class="step-detail-title" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:12px 0 6px">Сгенерировать уникальный ID</div>
+      <div class="code-block" id="code-id">const id = `plan_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
+return [{ json: { ...$input.first().json, id } }];<button class="copy-btn" onclick="copyCode('code-id',this)">copy</button></div>
+      <div class="warn">Переключай режим нода: "Run Once for All Items" (все items сразу) или "Run Once for Each Item" (по одному).</div>
+    </div>
+  </div>
+
+  <div class="coll" data-c="amber" onclick="toggleColl(this)">
+    <div class="coll-head"><div class="coll-title"><span class="pill pill-amber">Set</span></div><span class="coll-arr">▼</span></div>
+    <div class="coll-body" onclick="event.stopPropagation()">
+      <div class="card-body" style="margin-bottom:12px">Добавляет, изменяет или удаляет поля в item. Самый частый утилитарный нод.</div>
+      <table class="tbl"><tr><th>Режим</th><th>Что делает</th></tr>
+      <tr><td><code>Add Field</code></td><td>Добавляет новое поле, остальные сохраняются</td></tr>
+      <tr><td><code>Keep Only Set</code></td><td>Удаляет все поля кроме указанных</td></tr></table>
+      <div class="tip">Set нод удобен чтобы переименовать поле: получил <code>user_name</code>, хочешь передать дальше как <code>name</code> — Set сделает без кода.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── THEORY 3: EXPRESSIONS ─── -->
+<div class="section" id="s-t3">
+  <div class="page-header">
+    <div class="page-tag tag-purple">Теория · Блок 3</div>
+    <div class="page-title">Expressions</div>
+    <div class="page-desc">Как динамически подставлять данные из предыдущих нодов в поля. Без этого воркфлоу будут статичными.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Что такое expression</div>
+    <div class="card-body">Expression — JavaScript-выражение в двойных фигурных скобках: <code>{{ ... }}</code>. Вставляется в любое текстовое поле нода. Вычисляется в момент выполнения и подставляет реальное значение.<br><br>Вместо статичного "Привет!" пишешь <code>Привет, {{ $json.name }}!</code> — каждый пользователь получит своё имя.</div>
+  </div>
+
+  <h2 class="sh">Основные переменные</h2>
+  <table class="tbl">
+    <tr><th>Переменная</th><th>Что возвращает</th></tr>
+    <tr><td><code>$json.fieldName</code></td><td>Поле из текущего item (данные последнего нода)</td></tr>
+    <tr><td><code>$json.body.field</code></td><td>Поле из тела Webhook POST-запроса</td></tr>
+    <tr><td><code>$('Имя нода').item.json.field</code></td><td>Данные из конкретного нода по его имени</td></tr>
+    <tr><td><code>$input.all()</code></td><td>Все items из предыдущего нода как массив</td></tr>
+    <tr><td><code>$input.first().json</code></td><td>Первый item из предыдущего нода</td></tr>
+    <tr><td><code>$now</code></td><td>Текущее время (объект DateTime)</td></tr>
+    <tr><td><code>$now.toISO()</code></td><td>Время в ISO: <code>2024-11-15T09:00:00</code></td></tr>
+    <tr><td><code>$now.toFormat('dd.MM.yyyy')</code></td><td>Дата: <code>15.11.2024</code></td></tr>
+    <tr><td><code>$now.toFormat('dd.MM.yyyy HH:mm')</code></td><td>Дата + время: <code>15.11.2024 09:30</code></td></tr>
+  </table>
+
+  <h2 class="sh">Примеры</h2>
+
+  <div class="card">
+    <div class="card-title">В поле Text у Telegram нода</div>
+    <div class="code-block" id="expr-tg">Привет, {{ $('Telegram Trigger').item.json.message.from.first_name }}!
+
+*Новая заявка*
+Имя: {{ $('Webhook').item.json.body.name }}
+Email: {{ $('Webhook').item.json.body.email }}
+Дата: {{ $now.toFormat('dd.MM.yyyy HH:mm') }}<button class="copy-btn" onclick="copyCode('expr-tg',this)">copy</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">В поле User Message у AI Agent</div>
+    <div class="code-block" id="expr-ai">// Передать текст из Telegram
+{{ $('Telegram Trigger').item.json.message.text }}
+
+// Передать данные из формы с контекстом
+Клиент {{ $json.body.name }} пишет: {{ $json.body.request }}<button class="copy-btn" onclick="copyCode('expr-ai',this)">copy</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Chat ID — куда отвечать</div>
+    <div class="code-block" id="expr-chatid">{{ $('Telegram Trigger').item.json.message.chat.id }}<button class="copy-btn" onclick="copyCode('expr-chatid',this)">copy</button></div>
+    <div class="warn" style="margin-top:10px">После AI Agent нода <code>$json</code> содержит ответ AI, а не данные из Telegram. Поэтому Chat ID берём через <code>$('Telegram Trigger').item.json</code>, а не через <code>$json</code>.</div>
+  </div>
+</div>
+
+<!-- ─── PRACTICE 1 ─── -->
+<div class="section" id="s-p1">
+  <div class="page-header">
+    <div class="page-tag tag-teal">Практика 1</div>
+    <div class="page-title">Telegram-бот с AI-агентом</div>
+    <div class="page-desc">Создаём бота, пишем ему сообщение, AI-агент читает его и отвечает по заданному скрипту.</div>
+    <div class="nodes-row">
+      <span class="pill pill-purple">Telegram Trigger</span>
+      <span class="pill pill-blue">AI Agent</span>
+      <span class="pill pill-teal">Telegram</span>
+    </div>
+    <div style="margin-top:12px"><span class="badge-easy">Легко</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title teal">Шаг 0 — создаём бота в Telegram</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Открыть @BotFather</div>
+          <div class="step-desc">В Telegram найти <code>@BotFather</code> и написать <code>/newbot</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Придумать название и username</div>
+          <div class="step-desc">BotFather спросит название (любое) и username — обязательно заканчивается на <code>bot</code>, например <code>my_assistant_bot</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">3</div></div>
+        <div class="step-content">
+          <div class="step-title">Скопировать токен</div>
+          <div class="step-desc">BotFather пришлёт токен вида <code>7123456789:AAFxxx...</code> — сохрани, он нужен для Credentials</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title teal">Шаг 1 — Credentials в n8n</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Settings → Credentials → Add Credential</div>
+          <div class="step-desc">В поиске набрать "Telegram", выбрать <code>Telegram API</code>, вставить токен в поле <code>Access Token</code></div>
+          <div class="step-detail">Назвать: <code>Telegram Bot @my_assistant_bot</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">2</div></div>
+        <div class="step-content">
+          <div class="step-title">Создать OpenAI Credentials</div>
+          <div class="step-desc">Add Credential → <code>OpenAI API</code> → вставить API Key из <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title teal">Шаг 2 — собираем воркфлоу</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-purple">Telegram Trigger</span></div>
+          <div class="step-desc">Добавить нод → "Telegram Trigger"</div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Credential:</strong> выбрать Telegram credential<br>
+          <strong>Updates:</strong> <code>message</code><br><br>
+          Нажать <strong>"Listen for event"</strong> → написать что-нибудь своему боту → нод поймает данные.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-b">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-blue">AI Agent</span></div>
+          <div class="step-desc">Добавить нод → "AI Agent"</div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Credential:</strong> OpenAI API<br>
+          <strong>Model:</strong> <code>gpt-4o</code><br>
+          <strong>System Message:</strong> вставить System Prompt (см. ниже)<br>
+          <strong>User Message</strong> → Expression:
+          <div class="code-block" id="p1-um" style="margin-top:6px">{{ $('Telegram Trigger').item.json.message.text }}<button class="copy-btn" onclick="copyCode('p1-um',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">3</div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-teal">Telegram — Send Message</span></div>
+          <div class="step-desc">Добавить нод → "Telegram" → операция "Send Message"</div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Credential:</strong> тот же Telegram credential<br>
+          <strong>Chat ID</strong> → Expression:
+          <div class="code-block" id="p1-chatid" style="margin:6px 0">{{ $('Telegram Trigger').item.json.message.chat.id }}<button class="copy-btn" onclick="copyCode('p1-chatid',this)">copy</button></div>
+          <strong>Text</strong> → Expression:
+          <div class="code-block" id="p1-text" style="margin:6px 0">{{ $json.output }}<button class="copy-btn" onclick="copyCode('p1-text',this)">copy</button></div>
+          <strong>Parse Mode:</strong> <code>Markdown</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title teal">System Prompt — скопируй и вставь в AI Agent</div>
+    <div class="code-block" id="p1-sys">Ты — вежливый ассистент компании [Название компании].
+
+Твоя задача: отвечать на вопросы клиентов по нашим услугам.
+
+Наши услуги:
+— Консультация по автоматизации: 5 000 руб/час
+— Разработка воркфлоу под ключ: от 30 000 руб
+— Обучение n8n для команды: 15 000 руб (курс из 5 занятий)
+
+Правила:
+1. Отвечай кратко — не более 3 предложений
+2. Если вопрос не по услугам — вежливо объясни что ты помогаешь только по услугам компании
+3. Если клиент хочет записаться — скажи что менеджер свяжется в течение часа
+4. Не придумывай цены и услуги которых нет в списке
+
+Тон: профессиональный, дружелюбный, без воды.<button class="copy-btn" onclick="copyCode('p1-sys',this)">copy</button></div>
+    <div class="tip">Замени [Название компании] и услуги на свои. Чем конкретнее скрипт — тем точнее отвечает AI.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title teal">Чеклист</div>
+    <div class="cl-header"><span style="font-size:12px;color:var(--text3)">Прогресс</span><div class="cl-bar-wrap"><div class="cl-bar-fill" id="pb1" style="width:0%"></div></div><span class="cl-count" id="ct1">0 / 8</span></div>
+    <div class="cl-list" id="cl1">
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Создать бота через @BotFather, получить токен</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Создать Telegram API Credentials в n8n</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Создать OpenAI API Credentials в n8n</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить Telegram Trigger, поймать тестовое сообщение</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить AI Agent, вставить System Prompt и User Message expression</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить Telegram Send Message, настроить Chat ID и Text</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Запустить тест — написать боту вопрос, убедиться что ответил корректно</div></div>
+      <div class="cl-item" onclick="chk(this,'cl1','pb1','ct1',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Активировать воркфлоу (toggle Active в правом верхнем углу)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PRACTICE 2 ─── -->
+<div class="section" id="s-p2">
+  <div class="page-header">
+    <div class="page-tag tag-amber">Практика 2</div>
+    <div class="page-title">Лид-форма с AI-ответом</div>
+    <div class="page-desc">Webhook принимает заявку с сайта, AI составляет персональный ответ, данные пишутся в Google Sheets, менеджер получает уведомление в Telegram.</div>
+    <div class="nodes-row">
+      <span class="pill pill-purple">Webhook</span>
+      <span class="pill pill-amber">IF</span>
+      <span class="pill pill-blue">AI Agent</span>
+      <span class="pill pill-teal">Google Sheets</span>
+      <span class="pill pill-teal">Telegram</span>
+      <span class="pill pill-purple">Respond to Webhook</span>
+    </div>
+    <div style="margin-top:12px"><span class="badge-med">Средне</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">Что нового</div>
+    <div class="card-body">Впервые используем <strong>Webhook</strong> как триггер (не Telegram), добавляем <strong>валидацию данных</strong> через IF, учимся <strong>обращаться к данным из разных нодов</strong> через <code>$('Имя нода').item.json</code>, и возвращаем ответ через <strong>Respond to Webhook</strong>.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">Шаг 1 — Google Sheets</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Создать таблицу "Лиды"</div>
+          <div class="step-desc">В Google Sheets создать новую таблицу</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Заголовки в первой строке</div>
+          <div class="step-detail">A: <code>name</code> &nbsp;B: <code>email</code> &nbsp;C: <code>request</code> &nbsp;D: <code>ai_reply</code> &nbsp;E: <code>created_at</code> &nbsp;F: <code>status</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">3</div></div>
+        <div class="step-content">
+          <div class="step-title">Создать Google OAuth2 Credentials в n8n</div>
+          <div class="step-desc">Settings → Credentials → Add → "Google Sheets OAuth2 API" → следовать инструкции подключения Google аккаунта</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">Шаг 2 — собираем воркфлоу</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-purple">Webhook</span></div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>HTTP Method:</strong> POST<br>
+          <strong>Path:</strong> <code>lead-form</code><br>
+          <strong>Response Mode:</strong> Using 'Respond to Webhook' Node<br><br>
+          <strong>Тест через curl:</strong>
+          <div class="code-block" id="p2-curl" style="margin-top:8px">curl -X POST "ТВОЙ_TEST_URL" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Анна","email":"anna@mail.com","request":"Хочу автоматизировать отчёты"}'<button class="copy-btn" onclick="copyCode('p2-curl',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-a">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-amber">IF</span> — валидация</div>
+          <div class="step-detail"><div class="step-detail-title">Условие 1</div>
+          Value 1: <code>{{ $json.body.email }}</code> &nbsp; Operation: Contains &nbsp; Value 2: <code>@</code><br><br>
+          <strong>+ Add Condition (AND)</strong><br>
+          Value 1: <code>{{ $json.body.name }}</code> &nbsp; Operation: Is Not Empty<br><br>
+          <strong>False-ветка → Respond to Webhook:</strong>
+          <div class="code-block" id="p2-err" style="margin-top:6px">{"error": true, "message": "Заполните имя и корректный email"}<button class="copy-btn" onclick="copyCode('p2-err',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-b">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-blue">AI Agent</span></div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Model:</strong> gpt-4o<br>
+          <strong>System Message:</strong> вставить System Prompt (см. ниже)<br>
+          <strong>User Message:</strong>
+          <div class="code-block" id="p2-um" style="margin:6px 0">Клиент {{ $json.body.name }} написал: {{ $json.body.request }}<button class="copy-btn" onclick="copyCode('p2-um',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-teal">Google Sheets</span> — Append Row</div>
+          <div class="step-detail"><div class="step-detail-title">Маппинг колонок</div>
+          <div class="code-block" id="p2-sheets">name       → {{ $('Webhook').item.json.body.name }}
+email      → {{ $('Webhook').item.json.body.email }}
+request    → {{ $('Webhook').item.json.body.request }}
+ai_reply   → {{ $json.output }}
+created_at → {{ $now.toFormat('dd.MM.yyyy HH:mm') }}
+status     → new<button class="copy-btn" onclick="copyCode('p2-sheets',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">5</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-teal">Telegram</span> — менеджеру</div>
+          <div class="step-detail">
+          <strong>Chat ID:</strong> Chat ID менеджера (узнать через @userinfobot)<br>
+          <strong>Text:</strong>
+          <div class="code-block" id="p2-tg" style="margin:6px 0">*Новая заявка с сайта*
+
+Имя: {{ $('Webhook').item.json.body.name }}
+Email: {{ $('Webhook').item.json.body.email }}
+Запрос: {{ $('Webhook').item.json.body.request }}
+
+*AI ответил клиенту:*
+{{ $('AI Agent').item.json.output }}<button class="copy-btn" onclick="copyCode('p2-tg',this)">copy</button></div>
+          <strong>Parse Mode:</strong> Markdown</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">6</div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-purple">Respond to Webhook</span></div>
+          <div class="step-detail"><strong>Response Code:</strong> 200<br><strong>Body:</strong>
+          <div class="code-block" id="p2-resp" style="margin-top:6px">{"status": "ok", "reply": "{{ $('AI Agent').item.json.output }}"}<button class="copy-btn" onclick="copyCode('p2-resp',this)">copy</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">System Prompt для AI Agent</div>
+    <div class="code-block" id="p2-sys">Ты — менеджер по работе с клиентами компании [Название].
+
+Твоя задача: написать персональный первичный ответ на запрос клиента.
+
+Правила:
+1. Обращайся к клиенту по имени
+2. Покажи что понял его запрос — перефразируй в одном предложении
+3. Кратко объясни как мы можем помочь (2-3 предложения)
+4. Заверши: "Наш менеджер свяжется с вами в течение часа для уточнения деталей"
+5. Без воды, конкретно по запросу
+6. Не более 5 предложений total<button class="copy-btn" onclick="copyCode('p2-sys',this)">copy</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title amber">Чеклист</div>
+    <div class="cl-header"><span style="font-size:12px;color:var(--text3)">Прогресс</span><div class="cl-bar-wrap"><div class="cl-bar-fill" id="pb2" style="width:0%"></div></div><span class="cl-count" id="ct2">0 / 9</span></div>
+    <div class="cl-list" id="cl2">
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Создать Google Sheets "Лиды" с заголовками колонок</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Создать Google Sheets OAuth2 Credentials в n8n</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить Webhook нод, скопировать Test URL</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Отправить тестовый POST через curl, убедиться что данные пришли</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить IF нод с двумя условиями (email содержит @ AND имя не пустое)</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить AI Agent с System Prompt и User Message</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Настроить Google Sheets Append Row с маппингом всех полей</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить Telegram уведомление менеджеру и Respond to Webhook</div></div>
+      <div class="cl-item" onclick="chk(this,'cl2','pb2','ct2',9)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Протестировать с невалидным email — проверить ветку false</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PRACTICE 3 ─── -->
+<div class="section" id="s-p3">
+  <div class="page-header">
+    <div class="page-tag tag-blue">Практика 3</div>
+    <div class="page-title">Еженедельный AI-дайджест</div>
+    <div class="page-desc">Schedule Trigger каждую пятницу читает новые заявки из Sheets, Code нод собирает их в строку, AI пишет дайджест, отправляет команде и обновляет статусы.</div>
+    <div class="nodes-row">
+      <span class="pill pill-purple">Schedule Trigger</span>
+      <span class="pill pill-teal">Google Sheets read</span>
+      <span class="pill pill-amber">IF</span>
+      <span class="pill pill-amber">Code</span>
+      <span class="pill pill-blue">AI Agent</span>
+      <span class="pill pill-teal">Telegram</span>
+      <span class="pill pill-teal">Google Sheets update</span>
+    </div>
+    <div style="margin-top:12px"><span class="badge-hard">Сложно</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title blue">Что нового</div>
+    <div class="card-body">Три важные концепции: работа с <strong>массивом items</strong> (читаем сразу много строк), <strong>Code нод</strong> для трансформации данных, и <strong>Update Row</strong> — обновление статуса строк после обработки. Плюс Schedule Trigger вместо Webhook.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title blue">Собираем воркфлоу</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-p">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-purple">Schedule Trigger</span></div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Trigger Interval:</strong> Cron<br>
+          <strong>Cron Expression:</strong>
+          <div class="code-block" id="p3-cron" style="margin:6px 0">0 17 * * 5<button class="copy-btn" onclick="copyCode('p3-cron',this)">copy</button></div>
+          Каждую пятницу в 17:00.<br><br>
+          Для теста временно поставь <code>* * * * *</code> (каждую минуту), убедись что работает, потом верни пятничный cron.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-teal">Google Sheets</span> — Read Rows</div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Operation:</strong> Get Many Rows<br>
+          <strong>Spreadsheet:</strong> таблица "Лиды"<br>
+          <strong>Filters:</strong> Column <code>status</code> = <code>new</code><br><br>
+          Нод вернёт все строки где статус = new. Каждая строка = отдельный item.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-a">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-amber">IF</span> — есть ли заявки?</div>
+          <div class="step-detail">
+          Value 1 (Expression): <code>{{ $input.all().length }}</code><br>
+          Operation: Greater Than &nbsp; Value 2: <code>0</code><br><br>
+          <strong>False-ветка:</strong> ничего не подключать — воркфлоу завершится без ошибки.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-a">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-amber">Code</span> — собрать summary</div>
+          <div class="step-desc">Режим нода: <strong>"Run Once for All Items"</strong></div>
+          <div class="step-detail"><div class="step-detail-title">Код</div>
+          <div class="code-block" id="p3-code">const items = $input.all();
+
+const lines = items.map((item, idx) => {
+  const d = item.json;
+  return `${idx + 1}. Клиент: ${d.name || 'Неизвестно'} | Запрос: ${d.request || '—'}`;
+});
+
+const summary = lines.join('\n');
+
+return [{
+  json: {
+    summary,
+    count: items.length,
+    rowNumbers: items.map(i => i.json.row_number)
+  }
+}];<button class="copy-btn" onclick="copyCode('p3-code',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-b">5</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-blue">AI Agent</span> — дайджест</div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>System Message:</strong> вставить System Prompt (ниже)<br>
+          <strong>User Message:</strong>
+          <div class="code-block" id="p3-um" style="margin:6px 0">Вот заявки за эту неделю ({{ $json.count }} штук):
+
+{{ $json.summary }}<button class="copy-btn" onclick="copyCode('p3-um',this)">copy</button></div></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">6</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-teal">Telegram</span> — дайджест команде</div>
+          <div class="step-detail">
+          <strong>Chat ID:</strong> ID командного чата<br>
+          <strong>Text:</strong>
+          <div class="code-block" id="p3-tg" style="margin:6px 0">*Дайджест недели — {{ $now.toFormat('dd.MM.yyyy') }}*
+Обработано заявок: {{ $('Code').item.json.count }}
+
+{{ $json.output }}<button class="copy-btn" onclick="copyCode('p3-tg',this)">copy</button></div>
+          <strong>Parse Mode:</strong> Markdown</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-left"><div class="step-num sn-t">7</div></div>
+        <div class="step-content">
+          <div class="step-title"><span class="pill pill-teal">Google Sheets</span> — Update Row</div>
+          <div class="step-detail"><div class="step-detail-title">Настройки</div>
+          <strong>Operation:</strong> Update Row<br>
+          <strong>Column to Match On:</strong> колонка с уникальным значением (например email или row_number)<br>
+          <strong>status</strong> → <code>digest_sent</code><br><br>
+          n8n сам пройдётся по каждому item — Update Row запустится для каждой строки по очереди.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title blue">System Prompt для AI Agent</div>
+    <div class="code-block" id="p3-sys">Ты — аналитик команды. Составь краткий дайджест заявок за неделю для менеджеров.
+
+Структура ответа:
+1. Одно предложение — общий итог (сколько заявок, общая тема)
+2. Топ-3 повторяющихся темы/запроса (если есть)
+3. Одно предложение — на что обратить внимание на следующей неделе
+
+Правила:
+— Кратко, деловой тон
+— Без воды и общих фраз
+— Конкретные наблюдения из данных
+— Весь ответ не более 8 предложений<button class="copy-btn" onclick="copyCode('p3-sys',this)">copy</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title blue">Чеклист</div>
+    <div class="cl-header"><span style="font-size:12px;color:var(--text3)">Прогресс</span><div class="cl-bar-wrap"><div class="cl-bar-fill" id="pb3" style="width:0%"></div></div><span class="cl-count" id="ct3">0 / 8</span></div>
+    <div class="cl-list" id="cl3">
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить тестовые строки со статусом "new" в таблицу</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Добавить Schedule Trigger с cron "0 17 * * 5"</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Google Sheets Read — фильтр status = "new", убедиться что строки приходят</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">IF нод — проверить что items > 0, false-ветка пустая</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Code нод — вставить JS, переключить на "Run Once for All Items", проверить output</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">AI Agent — вставить System Prompt и User Message с summary</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Telegram — отправить дайджест, проверить форматирование</div></div>
+      <div class="cl-item" onclick="chk(this,'cl3','pb3','ct3',8)"><div class="cl-box"><svg class="cl-tick" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="cl-text">Google Sheets Update — обновить статус на "digest_sent", проверить в таблице</div></div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+function nav(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('s-'+el.dataset.s).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleConcept(el){
+  const was=el.classList.contains('open');
+  document.querySelectorAll('.concept-card').forEach(c=>c.classList.remove('open'));
+  if(!was)el.classList.add('open');
+}
+function toggleColl(el){el.classList.toggle('open')}
+function chk(el,clId,pbId,ctId,total){
+  el.classList.toggle('done');
+  const done=document.getElementById(clId).querySelectorAll('.cl-item.done').length;
+  document.getElementById(pbId).style.width=Math.round(done/total*100)+'%';
+  document.getElementById(ctId).textContent=done+' / '+total;
+}
+function copyCode(id,btn){
+  const el=document.getElementById(id);
+  let text=(el.innerText||el.textContent).replace(/\ncopy$/,'').replace(/copy$/,'').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='copy';btn.classList.remove('copied');},1800);
+  });
+}
+</script>
+</body>
+</html>
